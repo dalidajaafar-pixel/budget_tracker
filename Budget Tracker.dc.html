@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#E0D8CC;border-radius:8px;border:2px solid #F4EFE7}
+::-webkit-scrollbar-track{background:transparent}
+@keyframes popIn{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+input,select,button,textarea{font-family:'Outfit',system-ui,sans-serif}
+</style>
+</helmet>
+
+<div style="display:flex;height:100vh;overflow:hidden;font-family:'Outfit',system-ui,sans-serif;background:#F4EFE7;color:#2B2723">
+
+  <aside style="width:236px;flex-shrink:0;background:#FBF8F2;border-right:1px solid #EBE4D8;padding:22px 16px;display:flex;flex-direction:column;gap:5px">
+    <div style="display:flex;align-items:center;gap:11px;padding:4px 8px 20px">
+      <div style="width:34px;height:34px;border-radius:10px;background:#C2613E;display:flex;align-items:flex-end;justify-content:center;gap:2.5px;padding:8px 7px">
+        <span style="width:4px;height:9px;background:rgba(255,255,255,.55);border-radius:1.5px"></span>
+        <span style="width:4px;height:15px;background:#fff;border-radius:1.5px"></span>
+        <span style="width:4px;height:6px;background:rgba(255,255,255,.7);border-radius:1.5px"></span>
+      </div>
+      <div style="line-height:1.05">
+        <div style="font-weight:800;font-size:17px;letter-spacing:-.4px">Ledger</div>
+        <div style="font-size:11px;color:#A89E91;font-weight:500">Budget tracker</div>
+      </div>
+    </div>
+
+    <div style="font-size:10.5px;font-weight:700;color:#B8AFA2;text-transform:uppercase;letter-spacing:1px;padding:0 8px 8px">Menu</div>
+    <sc-for list="{{ navItems }}" as="item" hint-placeholder-count="4">
+      <button onClick="{{ item.onClick }}" style="{{ item.style }}">{{ item.label }}</button>
+    </sc-for>
+
+    <div style="margin-top:auto;padding:15px 16px;border-radius:13px;background:#fff;border:1px solid #EBE4D8">
+      <div style="font-size:10.5px;font-weight:700;color:#A89E91;text-transform:uppercase;letter-spacing:.7px">Net balance</div>
+      <div style="font-size:23px;font-weight:800;letter-spacing:-.6px;margin-top:4px;color:{{ balanceColor }}">{{ balanceLabel }}</div>
+    </div>
+  </aside>
+
+  <main style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <header style="display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid #EBE4D8;flex-shrink:0">
+      <div>
+        <div style="font-size:20px;font-weight:800;letter-spacing:-.4px">{{ pageTitle }}</div>
+        <div style="font-size:13px;color:#A89E91;font-weight:500;margin-top:1px">{{ pageSub }}</div>
+      </div>
+      <button onClick="{{ onAdd }}" style="display:flex;align-items:center;gap:7px;background:#C2613E;color:#fff;border:none;border-radius:10px;padding:10px 17px;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(178,83,47,.28)" style-hover="background:#B2532F">
+        <span style="font-size:17px;line-height:0;margin-top:-1px">+</span> Add transaction
+      </button>
+    </header>
+
+    <div style="flex:1;overflow:auto;padding:28px 32px 56px">
+
+      <!-- ================= DASHBOARD ================= -->
+      <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:16px;gap:10px">
+          <span style="font-size:13px;color:#8A8175;font-weight:600">Showing</span>
+          <select value="{{ dashMonth }}" onChange="{{ onDashMonth }}" style="padding:8px 12px;border:1px solid #E2DACE;border-radius:9px;font-size:13.5px;color:#2B2723;background:#fff;cursor:pointer;font-weight:600">
+            <sc-for list="{{ monthOptions }}" as="m" hint-placeholder-count="6"><option value="{{ m.key }}">{{ m.label }}</option></sc-for>
+          </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:18px">
+          <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:18px 20px">
+            <div style="font-size:12.5px;color:#9A9085;font-weight:600">Net balance · all time</div>
+            <div style="font-size:28px;font-weight:800;letter-spacing:-.8px;margin-top:6px;color:{{ balanceColor }}">{{ balanceLabel }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:#3F8F6E"></span><span style="font-size:12.5px;color:#9A9085;font-weight:600">Income · {{ dmShort }}</span></div>
+            <div style="font-size:28px;font-weight:800;letter-spacing:-.8px;margin-top:6px;color:#2E6B52">{{ mIncomeLabel }}</div>
+          </div>
+          <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:18px 20px">
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:3px;background:#C2613E"></span><span style="font-size:12.5px;color:#9A9085;font-weight:600">Expenses · {{ dmShort }}</span></div>
+            <div style="font-size:28px;font-weight:800;letter-spacing:-.8px;margin-top:6px;color:#B2532F">{{ mExpenseLabel }}</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1.25fr;gap:18px;margin-bottom:18px">
+          <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:20px">
+            <div style="font-weight:700;font-size:15px;margin-bottom:18px">Spending by category</div>
+            <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+              <div style="position:relative;width:200px;height:200px;flex-shrink:0">
+                <svg viewBox="0 0 200 200" style="width:200px;height:200px;display:block">
+                  <circle cx="100" cy="100" r="71" fill="none" stroke="#EFEAE0" strokeWidth="30"></circle>
+                  <sc-for list="{{ pieSlices }}" as="s" hint-placeholder-count="5">
+                    <circle cx="100" cy="100" r="71" fill="none" stroke="{{ s.color }}" strokeWidth="30" strokeDasharray="{{ s.dash }}" strokeDashoffset="{{ s.offset }}" transform="rotate(-90 100 100)"></circle>
+                  </sc-for>
+                </svg>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+                  <div style="font-size:11.5px;color:#9A9085;font-weight:600">{{ pieCaption }}</div>
+                  <div style="font-size:25px;font-weight:800;letter-spacing:-.6px">{{ pieTotalLabel }}</div>
+                </div>
+              </div>
+              <div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:10px">
+                <sc-for list="{{ pieSlices }}" as="s" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:center;gap:10px;font-size:13px">
+                    <span style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:{{ s.color }}"></span>
+                    <span style="flex:1;color:#5A5249;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.label }}</span>
+                    <span style="color:#A89E91;font-variant-numeric:tabular-nums">{{ s.pctLabel }}</span>
+                    <span style="font-weight:700;font-variant-numeric:tabular-nums;min-width:66px;text-align:right">{{ s.valueLabel }}</span>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ pieEmpty }}" hint-placeholder-val="{{ false }}"><div style="color:#B8AFA2;font-size:13px">No expenses recorded this month.</div></sc-if>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <div style="font-weight:700;font-size:15px">Income vs expenses</div>
+              <div style="display:flex;gap:16px">
+                <span style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#8A8175;font-weight:600"><span style="width:9px;height:9px;border-radius:3px;background:#3F8F6E"></span>Income</span>
+                <span style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#8A8175;font-weight:600"><span style="width:9px;height:9px;border-radius:3px;background:#C2613E"></span>Expenses</span>
+              </div>
+            </div>
+            <svg viewBox="0 0 480 200" style="width:100%;height:230px;display:block">
+              <sc-for list="{{ barGrid }}" as="g" hint-placeholder-count="3">
+                <line x1="40" x2="474" y1="{{ g.y }}" y2="{{ g.y }}" stroke="#EFEAE0" strokeWidth="1"></line>
+                <text x="34" y="{{ g.ly }}" textAnchor="end" fontSize="9.5" fill="#B8AFA2" fontFamily="Outfit">{{ g.label }}</text>
+              </sc-for>
+              <sc-for list="{{ barRects }}" as="b" hint-placeholder-count="12">
+                <rect x="{{ b.x }}" y="{{ b.y }}" width="{{ b.w }}" height="{{ b.h }}" rx="3" fill="{{ b.color }}"></rect>
+              </sc-for>
+              <sc-for list="{{ barLabels }}" as="l" hint-placeholder-count="6">
+                <text x="{{ l.x }}" y="180" textAnchor="middle" fontSize="11.5" fill="#8A8175" fontFamily="Outfit" fontWeight="600">{{ l.label }}</text>
+              </sc-for>
+            </svg>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;overflow:hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #F1EBE1">
+            <div style="font-weight:700;font-size:15px">Recent activity</div>
+            <button onClick="{{ onGoTx }}" style="background:none;border:none;color:#C2613E;font-weight:600;font-size:13px;cursor:pointer">View all →</button>
+          </div>
+          <sc-for list="{{ recentRows }}" as="row" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:96px 1fr 130px;align-items:center;gap:10px;padding:13px 20px;border-top:1px solid #F6F1E9">
+              <div style="font-size:13px;color:#9A9085;font-variant-numeric:tabular-nums">{{ row.dateLabel }}</div>
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <span style="width:9px;height:9px;border-radius:3px;flex-shrink:0;background:{{ row.color }}"></span>
+                <span style="font-weight:600;font-size:14px">{{ row.category }}</span>
+                <span style="font-size:12.5px;color:#B0A697;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.note }}</span>
+              </div>
+              <div style="text-align:right;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;color:{{ row.amountColor }}">{{ row.amountLabel }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ================= TRANSACTIONS ================= -->
+      <sc-if value="{{ isTransactions }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:11px">
+            <span style="font-size:13px;color:#8A8175;font-weight:600">Filter by month</span>
+            <select value="{{ filterMonth }}" onChange="{{ onFilter }}" style="padding:8px 12px;border:1px solid #E2DACE;border-radius:9px;font-size:13.5px;color:#2B2723;background:#fff;cursor:pointer;font-weight:600">
+              <sc-for list="{{ filterOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o.key }}">{{ o.label }}</option></sc-for>
+            </select>
+            <span style="font-size:13px;color:#B0A697">{{ txCountLabel }}</span>
+          </div>
+          <button onClick="{{ onAdd }}" style="display:flex;align-items:center;gap:6px;background:#C2613E;color:#fff;border:none;border-radius:9px;padding:9px 15px;font-weight:600;font-size:13.5px;cursor:pointer" style-hover="background:#B2532F"><span style="font-size:16px;line-height:0">+</span> Add</button>
+        </div>
+
+        <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:104px 1fr 104px 140px 110px;gap:8px;padding:13px 18px;background:#FBF8F2;border-bottom:1px solid #EBE4D8;font-size:11.5px;font-weight:700;color:#A89E91;text-transform:uppercase;letter-spacing:.6px">
+            <div>Date</div><div>Category</div><div>Type</div><div style="text-align:right">Amount</div><div></div>
+          </div>
+          <sc-for list="{{ txRows }}" as="row" hint-placeholder-count="8">
+            <div style="display:grid;grid-template-columns:104px 1fr 104px 140px 110px;align-items:center;gap:8px;padding:13px 18px;border-top:1px solid #F6F1E9" style-hover="background:#FCFAF6">
+              <div style="font-size:13px;color:#8A8175;font-variant-numeric:tabular-nums">{{ row.dateLabel }}</div>
+              <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                <span style="width:9px;height:9px;border-radius:3px;flex-shrink:0;background:{{ row.color }}"></span>
+                <span style="font-weight:600;font-size:14px;white-space:nowrap">{{ row.category }}</span>
+                <span style="font-size:12.5px;color:#B0A697;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ row.note }}</span>
+              </div>
+              <div><span style="display:inline-block;padding:3px 10px;border-radius:999px;font-size:11.5px;font-weight:700;background:{{ row.badgeBg }};color:{{ row.badgeColor }}">{{ row.typeLabel }}</span></div>
+              <div style="text-align:right;font-weight:700;font-size:14.5px;font-variant-numeric:tabular-nums;color:{{ row.amountColor }}">{{ row.amountLabel }}</div>
+              <div style="display:flex;gap:6px;justify-content:flex-end">
+                <button onClick="{{ row.onEdit }}" style="padding:5px 11px;border:1px solid #E2DACE;background:#fff;border-radius:7px;font-size:12px;font-weight:600;color:#6B6358;cursor:pointer" style-hover="background:#FBF8F2">Edit</button>
+                <button onClick="{{ row.onDelete }}" style="padding:5px 11px;border:1px solid #E8C9BC;background:#fff;border-radius:7px;font-size:12px;font-weight:600;color:#B2532F;cursor:pointer" style-hover="background:#F6E7DF">Delete</button>
+              </div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noTx }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:48px 20px;text-align:center;color:#B0A697">
+              <div style="font-size:15px;font-weight:600;color:#8A8175;margin-bottom:4px">No transactions here yet</div>
+              <div style="font-size:13.5px">Add one to start tracking this period.</div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ================= CATEGORIES ================= -->
+      <sc-if value="{{ isCategories }}" hint-placeholder-val="{{ false }}">
+      <div>
+        <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:20px;margin-bottom:20px">
+          <div style="font-weight:700;font-size:15px;margin-bottom:15px">New category</div>
+          <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:200px">
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Name</label>
+              <input value="{{ catForm.name }}" onChange="{{ onCatName }}" placeholder="e.g. Subscriptions" style="width:100%;padding:10px 12px;border:1px solid #E2DACE;border-radius:9px;font-size:14px;color:#2B2723;background:#FBF8F2;outline:none" style-focus="border:1px solid #C2613E;background:#fff">
+            </div>
+            <div style="min-width:210px">
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Applies to</label>
+              <div style="display:flex;gap:8px">
+                <button onClick="{{ onCatTypeExp }}" style="{{ cTypeExpStyle }}">Expense</button>
+                <button onClick="{{ onCatTypeInc }}" style="{{ cTypeIncStyle }}">Income</button>
+              </div>
+            </div>
+            <button onClick="{{ onAddCat }}" style="padding:10px 18px;background:#C2613E;color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#B2532F">Add category</button>
+          </div>
+          <sc-if value="{{ catError }}" hint-placeholder-val="{{ false }}"><div style="color:#B2532F;font-size:13px;font-weight:600;margin-top:12px">{{ catError }}</div></sc-if>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:14px">
+          <sc-for list="{{ catRows }}" as="c" hint-placeholder-count="8">
+            <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:11px">
+                <span style="width:13px;height:13px;border-radius:4px;flex-shrink:0;background:{{ c.color }}"></span>
+                <span style="font-weight:700;font-size:15px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.name }}</span>
+                <span style="padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;background:#F1ECE3;color:#8A8175">{{ c.typeLabel }}</span>
+              </div>
+              <div style="display:flex;align-items:flex-end;justify-content:space-between">
+                <div>
+                  <div style="font-size:12px;color:#A89E91">{{ c.countLabel }}</div>
+                  <div style="font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.3px;margin-top:2px">{{ c.totalLabel }}</div>
+                </div>
+                <button onClick="{{ c.onDelete }}" style="padding:5px 11px;border:1px solid #E8C9BC;background:#fff;border-radius:7px;font-size:12px;font-weight:600;color:#B2532F;cursor:pointer" style-hover="background:#F6E7DF">Delete</button>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ================= EXPORT ================= -->
+      <sc-if value="{{ isExport }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:780px">
+        <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;padding:24px;margin-bottom:20px">
+          <div style="font-weight:700;font-size:16px;margin-bottom:5px">Export as CSV</div>
+          <div style="font-size:13.5px;color:#8A8175;margin-bottom:20px">Download your transaction records. Opens in Excel, Numbers or Google Sheets.</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Range</label>
+              <select value="{{ exportScope }}" onChange="{{ onScope }}" style="padding:10px 13px;border:1px solid #E2DACE;border-radius:9px;font-size:14px;color:#2B2723;background:#fff;cursor:pointer;font-weight:600;min-width:220px">
+                <sc-for list="{{ exportOptions }}" as="o" hint-placeholder-count="6"><option value="{{ o.key }}">{{ o.label }}</option></sc-for>
+              </select>
+            </div>
+            <button onClick="{{ onExport }}" style="display:flex;align-items:center;gap:8px;padding:11px 19px;background:#C2613E;color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#B2532F"><span style="font-size:15px;line-height:0">↓</span> Download CSV</button>
+          </div>
+          <div style="display:flex;gap:30px;margin-top:22px;flex-wrap:wrap;padding-top:20px;border-top:1px solid #F1EBE1">
+            <div><div style="font-size:12px;color:#A89E91;font-weight:600">Records</div><div style="font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px">{{ scopeCount }}</div></div>
+            <div><div style="font-size:12px;color:#A89E91;font-weight:600">Income</div><div style="font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;color:#2E6B52">{{ sIncLabel }}</div></div>
+            <div><div style="font-size:12px;color:#A89E91;font-weight:600">Expenses</div><div style="font-size:20px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:2px;color:#B2532F">{{ sExpLabel }}</div></div>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #EBE4D8;border-radius:14px;overflow:hidden">
+          <div style="padding:14px 18px;border-bottom:1px solid #F1EBE1;font-weight:700;font-size:14px">Preview</div>
+          <div style="display:grid;grid-template-columns:96px 100px 1fr 130px;gap:8px;padding:11px 18px;background:#FBF8F2;border-bottom:1px solid #EBE4D8;font-size:11px;font-weight:700;color:#A89E91;text-transform:uppercase;letter-spacing:.6px">
+            <div>Date</div><div>Type</div><div>Category</div><div style="text-align:right">Amount</div>
+          </div>
+          <sc-for list="{{ exportPreview }}" as="row" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:96px 100px 1fr 130px;align-items:center;gap:8px;padding:11px 18px;border-top:1px solid #F6F1E9;font-size:13.5px">
+              <div style="color:#8A8175;font-variant-numeric:tabular-nums">{{ row.dateLabel }}</div>
+              <div style="color:#8A8175">{{ row.typeLabel }}</div>
+              <div style="font-weight:600">{{ row.category }}</div>
+              <div style="text-align:right;font-weight:700;font-variant-numeric:tabular-nums;color:{{ row.amountColor }}">{{ row.amountLabel }}</div>
+            </div>
+          </sc-for>
+          <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}"><div style="padding:12px 18px;font-size:13px;color:#B0A697;border-top:1px solid #F6F1E9">+ {{ exportMore }} more rows in the file</div></sc-if>
+        </div>
+      </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <!-- ================= MODAL ================= -->
+  <sc-if value="{{ showForm }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ onClose }}" style="position:fixed;inset:0;background:rgba(45,33,25,.42);display:flex;align-items:center;justify-content:center;padding:20px;z-index:60;animation:fadeIn .15s ease">
+      <div onClick="{{ onInner }}" style="width:100%;max-width:432px;background:#fff;border-radius:18px;padding:24px;box-shadow:0 26px 64px rgba(40,25,15,.3);animation:popIn .2s ease">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <div style="font-weight:800;font-size:18px;letter-spacing:-.3px">{{ modalTitle }}</div>
+          <button onClick="{{ onClose }}" style="width:30px;height:30px;border-radius:8px;border:1px solid #EBE4D8;background:#fff;color:#8A8175;cursor:pointer;font-size:17px;line-height:1;display:flex;align-items:center;justify-content:center" style-hover="background:#FBF8F2">×</button>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Amount</label>
+          <div style="position:relative">
+            <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#9A9085;font-weight:600">{{ curSym }}</span>
+            <input value="{{ form.amount }}" onChange="{{ onAmount }}" inputMode="decimal" placeholder="0.00" style="width:100%;padding:10px 12px 10px 27px;border:1px solid #E2DACE;border-radius:9px;font-size:14px;color:#2B2723;background:#FBF8F2;outline:none;font-variant-numeric:tabular-nums" style-focus="border:1px solid #C2613E;background:#fff">
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Type</label>
+          <div style="display:flex;gap:8px">
+            <button onClick="{{ onTypeExp }}" style="{{ typeExpStyle }}">Expense</button>
+            <button onClick="{{ onTypeInc }}" style="{{ typeIncStyle }}">Income</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Category</label>
+          <select value="{{ form.category }}" onChange="{{ onCategory }}" style="width:100%;padding:10px 12px;border:1px solid #E2DACE;border-radius:9px;font-size:14px;color:#2B2723;background:#FBF8F2;outline:none;cursor:pointer" style-focus="border:1px solid #C2613E;background:#fff">
+            <option value="">Select category…</option>
+            <sc-for list="{{ formCatOptions }}" as="o" hint-placeholder-count="5"><option value="{{ o.name }}">{{ o.name }}</option></sc-for>
+          </select>
+        </div>
+
+        <div style="margin-bottom:14px">
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Date</label>
+          <input type="date" value="{{ form.date }}" onChange="{{ onDate }}" style="width:100%;padding:10px 12px;border:1px solid #E2DACE;border-radius:9px;font-size:14px;color:#2B2723;background:#FBF8F2;outline:none" style-focus="border:1px solid #C2613E;background:#fff">
+        </div>
+
+        <div>
+          <label style="display:block;font-size:12.5px;font-weight:600;color:#8A8175;margin-bottom:6px">Note (optional)</label>
+          <input value="{{ form.note }}" onChange="{{ onNote }}" placeholder="Add a note" style="width:100%;padding:10px 12px;border:1px solid #E2DACE;border-radius:9px;font-size:14px;color:#2B2723;background:#FBF8F2;outline:none" style-focus="border:1px solid #C2613E;background:#fff">
+        </div>
+
+        <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}"><div style="color:#B2532F;font-size:13px;font-weight:600;margin-top:10px">{{ formError }}</div></sc-if>
+
+        <div style="display:flex;gap:10px;margin-top:22px">
+          <button onClick="{{ onClose }}" style="flex:1;padding:11px;background:#F1ECE3;color:#6B6358;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#EAE3D7">Cancel</button>
+          <button onClick="{{ onSubmit }}" style="flex:1;padding:11px;background:#C2613E;color:#fff;border:none;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer" style-hover="background:#B2532F">{{ saveLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;currency&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;$&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  KEY = 'budgetTracker_ledger_v2';
+  MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  MONTHFULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  PALETTE = ['oklch(0.70 0.12 145)','oklch(0.60 0.10 265)','oklch(0.72 0.13 60)','oklch(0.65 0.11 235)','oklch(0.68 0.10 190)','oklch(0.63 0.13 320)','oklch(0.70 0.12 25)','oklch(0.64 0.12 295)','oklch(0.66 0.12 110)','oklch(0.60 0.11 200)','oklch(0.69 0.11 90)','oklch(0.62 0.12 350)'];
+
+  state = this.initState();
+
+  initState() {
+    const data = this.loadData();
+    return {
+      transactions: data.transactions,
+      categories: data.categories,
+      page: 'dashboard',
+      filterMonth: 'all',
+      dashMonth: '2026-06',
+      showForm: false,
+      editingId: null,
+      form: this.blankForm(),
+      formError: '',
+      catForm: { name: '', type: 'expense' },
+      catError: '',
+      exportScope: 'all'
+    };
+  }
+  blankForm() { return { amount: '', type: 'expense', category: '', date: '2026-06-15', note: '' }; }
+
+  loadData() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d && Array.isArray(d.transactions) && Array.isArray(d.categories)) return d;
+      }
+    } catch (e) {}
+    return this.seed();
+  }
+  save(transactions, categories) {
+    try { localStorage.setItem(this.KEY, JSON.stringify({ transactions, categories })); } catch (e) {}
+  }
+
+  lastNMonths(n) {
+    const out = [];
+    const anchor = 2026 * 12 + (6 - 1);
+    for (let i = n - 1; i >= 0; i--) {
+      const t = anchor - i, yy = Math.floor(t / 12), mm = t % 12;
+      out.push({ key: yy + '-' + String(mm + 1).padStart(2, '0'), short: this.MON[mm] });
+    }
+    return out;
+  }
+
+  seed() {
+    const cats = [
+      { name: 'Salary', type: 'income', color: 'oklch(0.62 0.12 150)' },
+      { name: 'Freelance', type: 'income', color: 'oklch(0.66 0.12 110)' },
+      { name: 'Investments', type: 'income', color: 'oklch(0.60 0.11 200)' },
+      { name: 'Groceries', type: 'expense', color: 'oklch(0.70 0.12 145)' },
+      { name: 'Rent', type: 'expense', color: 'oklch(0.60 0.10 265)' },
+      { name: 'Dining', type: 'expense', color: 'oklch(0.72 0.13 60)' },
+      { name: 'Transport', type: 'expense', color: 'oklch(0.65 0.11 235)' },
+      { name: 'Utilities', type: 'expense', color: 'oklch(0.68 0.10 190)' },
+      { name: 'Entertainment', type: 'expense', color: 'oklch(0.63 0.13 320)' },
+      { name: 'Health', type: 'expense', color: 'oklch(0.70 0.12 25)' },
+      { name: 'Shopping', type: 'expense', color: 'oklch(0.64 0.12 295)' }
+    ];
+    const tx = [];
+    let id = 1;
+    const months = this.lastNMonths(6);
+    months.forEach((m, mi) => {
+      const pad = (d) => m.key + '-' + String(d).padStart(2, '0');
+      tx.push({ id: id++, amount: 4200, type: 'income', category: 'Salary', date: pad(1), note: 'Monthly salary' });
+      tx.push({ id: id++, amount: 1500, type: 'expense', category: 'Rent', date: pad(2), note: 'Apartment' });
+      tx.push({ id: id++, amount: 118 + (mi * 17) % 64, type: 'expense', category: 'Groceries', date: pad(6), note: 'Weekly shop' });
+      tx.push({ id: id++, amount: 92 + (mi * 11) % 48, type: 'expense', category: 'Groceries', date: pad(19), note: 'Groceries' });
+      tx.push({ id: id++, amount: 44 + (mi * 13) % 38, type: 'expense', category: 'Dining', date: pad(11), note: 'Dinner out' });
+      tx.push({ id: id++, amount: 58 + (mi * 9) % 40, type: 'expense', category: 'Transport', date: pad(8), note: 'Fuel & transit' });
+      tx.push({ id: id++, amount: 132 + (mi * 7) % 56, type: 'expense', category: 'Utilities', date: pad(14), note: 'Electric + water' });
+      tx.push({ id: id++, amount: 28 + (mi * 8) % 46, type: 'expense', category: 'Entertainment', date: pad(22), note: 'Streaming & films' });
+    });
+    const last = months[months.length - 1].key;
+    const prev = months[months.length - 2].key;
+    tx.push({ id: id++, amount: 650, type: 'income', category: 'Freelance', date: last + '-12', note: 'Design project' });
+    tx.push({ id: id++, amount: 210, type: 'expense', category: 'Shopping', date: last + '-09', note: 'New shoes' });
+    tx.push({ id: id++, amount: 76, type: 'expense', category: 'Health', date: last + '-05', note: 'Pharmacy' });
+    tx.push({ id: id++, amount: 180, type: 'income', category: 'Investments', date: prev + '-20', note: 'Dividends' });
+    tx.push({ id: id++, amount: 165, type: 'expense', category: 'Shopping', date: prev + '-16', note: 'Homeware' });
+    return { transactions: tx, categories: cats };
+  }
+
+  cur() { return this.props.currency || '$'; }
+  fmt(n) { return this.cur() + (Math.abs(Number(n) || 0)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  fmt0(n) { return this.cur() + (Math.abs(Number(n) || 0)).toLocaleString('en-US', { maximumFractionDigits: 0 }); }
+  fmtDate(key) { const p = key.split('-'); return this.MON[+p[1] - 1] + ' ' + (+p[2]); }
+  monthLabel(key) { if (key === 'all') return 'All time'; const p = key.split('-'); return this.MONTHFULL[+p[1] - 1] + ' ' + p[0]; }
+  colorFor(name) { const c = this.state.categories.find(x => x.name === name); return c ? c.color : '#BBB1A4'; }
+
+  go(page) { this.setState({ page, showForm: false }); }
+  setDashMonth(e) { this.setState({ dashMonth: e.target.value }); }
+  setFilter(e) { this.setState({ filterMonth: e.target.value }); }
+  setScope(e) { this.setState({ exportScope: e.target.value }); }
+
+  openAdd() { this.setState({ showForm: true, editingId: null, form: this.blankForm(), formError: '' }); }
+  openEdit(t) { this.setState({ showForm: true, editingId: t.id, form: { amount: String(t.amount), type: t.type, category: t.category, date: t.date, note: t.note || '' }, formError: '' }); }
+  closeForm() { this.setState({ showForm: false, editingId: null, formError: '' }); }
+  setForm(k, v) { this.setState({ form: { ...this.state.form, [k]: v }, formError: '' }); }
+  setFormType(t) {
+    const cat = this.state.form.category;
+    const ok = this.state.categories.some(c => c.name === cat && c.type === t);
+    this.setState({ form: { ...this.state.form, type: t, category: ok ? cat : '' }, formError: '' });
+  }
+  submitForm() {
+    const f = this.state.form, amt = parseFloat(f.amount);
+    if (!(amt > 0)) return this.setState({ formError: 'Enter an amount greater than 0.' });
+    if (!f.category) return this.setState({ formError: 'Please choose a category.' });
+    if (!f.date) return this.setState({ formError: 'Please pick a date.' });
+    let transactions;
+    if (this.state.editingId != null) {
+      transactions = this.state.transactions.map(t => t.id === this.state.editingId ? { ...t, amount: amt, type: f.type, category: f.category, date: f.date, note: f.note || '' } : t);
+    } else {
+      const id = Math.max(0, ...this.state.transactions.map(t => t.id)) + 1;
+      transactions = [...this.state.transactions, { id, amount: amt, type: f.type, category: f.category, date: f.date, note: f.note || '' }];
+    }
+    this.setState({ transactions, showForm: false, editingId: null, form: this.blankForm(), formError: '' });
+    this.save(transactions, this.state.categories);
+  }
+  delTx(id) {
+    const transactions = this.state.transactions.filter(t => t.id !== id);
+    this.setState({ transactions });
+    this.save(transactions, this.state.categories);
+  }
+
+  setCat(k, v) { this.setState({ catForm: { ...this.state.catForm, [k]: v }, catError: '' }); }
+  addCategory() {
+    const f = this.state.catForm, name = (f.name || '').trim();
+    if (!name) return this.setState({ catError: 'Enter a category name.' });
+    if (this.state.categories.some(c => c.name.toLowerCase() === name.toLowerCase())) return this.setState({ catError: 'That category already exists.' });
+    const color = this.PALETTE[this.state.categories.length % this.PALETTE.length];
+    const categories = [...this.state.categories, { name, type: f.type, color }];
+    this.setState({ categories, catForm: { name: '', type: f.type }, catError: '' });
+    this.save(this.state.transactions, categories);
+  }
+  delCategory(name) {
+    const transactions = this.state.transactions.map(t => t.category === name ? { ...t, category: 'Uncategorized' } : t);
+    const categories = this.state.categories.filter(c => c.name !== name);
+    this.setState({ transactions, categories });
+    this.save(transactions, categories);
+  }
+
+  scopeRows() {
+    const sc = this.state.exportScope;
+    return this.state.transactions
+      .filter(t => sc === 'all' || t.date.slice(0, 7) === sc)
+      .slice().sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id);
+  }
+  exportCsv() {
+    const rows = this.scopeRows();
+    const head = ['Date', 'Type', 'Category', 'Amount', 'Note'];
+    const esc = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const lines = [head.join(',')];
+    rows.forEach(t => lines.push([t.date, t.type, t.category, Number(t.amount).toFixed(2), t.note || ''].map(esc).join(',')));
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = this.state.exportScope === 'all' ? 'transactions.csv' : 'transactions-' + this.state.exportScope + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 800);
+  }
+
+  rowVM(t) {
+    const isInc = t.type === 'income';
+    return {
+      id: t.id, date: t.date, dateLabel: this.fmtDate(t.date),
+      category: t.category, color: this.colorFor(t.category),
+      type: t.type, typeLabel: isInc ? 'Income' : 'Expense', isIncome: isInc, note: t.note || '',
+      amountLabel: (isInc ? '+' : '−') + this.fmt(t.amount),
+      amountColor: isInc ? '#2E6B52' : '#B2532F',
+      badgeBg: isInc ? '#E2F0E9' : '#F6E7DF', badgeColor: isInc ? '#2E6B52' : '#B2532F',
+      onEdit: () => this.openEdit(t), onDelete: () => this.delTx(t.id)
+    };
+  }
+
+  renderVals() {
+    const S = this.state, txs = S.transactions;
+    let inc = 0, exp = 0;
+    txs.forEach(t => { if (t.type === 'income') inc += +t.amount; else exp += +t.amount; });
+    const balance = inc - exp;
+
+    const set = new Set(txs.map(t => t.date.slice(0, 7)));
+    this.lastNMonths(6).forEach(m => set.add(m.key));
+    const monthKeys = Array.from(set).sort().reverse();
+    const monthOptions = monthKeys.map(k => ({ key: k, label: this.monthLabel(k) }));
+    const filterOptions = [{ key: 'all', label: 'All months' }, ...monthOptions];
+    const exportOptions = [{ key: 'all', label: 'All transactions' }, ...monthOptions];
+
+    const dm = S.dashMonth;
+    let mInc = 0, mExp = 0;
+    txs.forEach(t => { if (t.date.slice(0, 7) === dm) { if (t.type === 'income') mInc += +t.amount; else mExp += +t.amount; } });
+    const dmShort = this.MON[+dm.split('-')[1] - 1];
+
+    // PIE
+    const pmap = {};
+    txs.forEach(t => { if (t.type === 'expense' && t.date.slice(0, 7) === dm) pmap[t.category] = (pmap[t.category] || 0) + +t.amount; });
+    const pdata = Object.keys(pmap).map(k => ({ label: k, value: pmap[k], color: this.colorFor(k) })).sort((a, b) => b.value - a.value);
+    const ptotal = pdata.reduce((s, d) => s + d.value, 0);
+    const C = 2 * Math.PI * 71;
+    let acc = 0;
+    const pieSlices = pdata.map(d => {
+      const len = ptotal > 0 ? d.value / ptotal * C : 0;
+      const slice = { color: d.color, dash: (len - 1.2).toFixed(2) + ' ' + (C - len + 1.2).toFixed(2), offset: (-acc).toFixed(2), label: d.label, valueLabel: this.fmt(d.value), pctLabel: ptotal > 0 ? Math.round(d.value / ptotal * 100) + '%' : '0%' };
+      acc += len; return slice;
+    });
+
+    // BAR
+    const months = this.lastNMonths(6);
+    const mrows = months.map(m => {
+      let i = 0, e = 0;
+      txs.forEach(t => { if (t.date.slice(0, 7) === m.key) { if (t.type === 'income') i += +t.amount; else e += +t.amount; } });
+      return { short: m.short, inc: i, exp: e };
+    });
+    const rawMax = Math.max(1, ...mrows.map(r => Math.max(r.inc, r.exp)));
+    const niceMax = Math.ceil(rawMax / 500) * 500;
+    const leftPad = 40, top = 12, plotH = 150, baseY = top + plotH, plotW = 480 - leftPad - 8, groupW = plotW / 6, barW = 16, gap = 9;
+    const barRects = [];
+    mrows.forEach((r, gi) => {
+      const gl = leftPad + gi * groupW, start = gl + (groupW - (barW * 2 + gap)) / 2;
+      const ih = r.inc / niceMax * plotH, eh = r.exp / niceMax * plotH;
+      barRects.push({ x: start.toFixed(1), y: (baseY - ih).toFixed(1), w: barW, h: Math.max(0, ih).toFixed(1), color: '#3F8F6E' });
+      barRects.push({ x: (start + barW + gap).toFixed(1), y: (baseY - eh).toFixed(1), w: barW, h: Math.max(0, eh).toFixed(1), color: '#C2613E' });
+    });
+    const barLabels = mrows.map((r, gi) => ({ x: (leftPad + gi * groupW + groupW / 2).toFixed(1), label: r.short }));
+    const barGrid = [0, 0.5, 1].map(f => ({ y: (baseY - plotH * f).toFixed(1), ly: (baseY - plotH * f + 3).toFixed(1), label: this.fmt0(niceMax * f) }));
+
+    const recentRows = txs.slice().sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id).slice(0, 6).map(t => this.rowVM(t));
+
+    const filtered = txs.filter(t => S.filterMonth === 'all' || t.date.slice(0, 7) === S.filterMonth).sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : b.id - a.id);
+    const txRows = filtered.map(t => this.rowVM(t));
+    const txCount = filtered.length;
+
+    const catRows = S.categories.map(c => {
+      const used = txs.filter(t => t.category === c.name);
+      const total = used.reduce((s, t) => s + +t.amount, 0);
+      return { name: c.name, color: c.color, typeLabel: c.type === 'income' ? 'Income' : 'Expense', countLabel: used.length + (used.length === 1 ? ' transaction' : ' transactions'), totalLabel: this.fmt(total), onDelete: () => this.delCategory(c.name) };
+    });
+
+    const formCatOptions = S.categories.filter(c => c.type === S.form.type).map(c => ({ name: c.name }));
+
+    const sRows = this.scopeRows();
+    let sInc = 0, sExp = 0;
+    sRows.forEach(t => { if (t.type === 'income') sInc += +t.amount; else sExp += +t.amount; });
+    const exportPreview = sRows.slice(0, 8).map(t => this.rowVM(t));
+    const exportMore = Math.max(0, sRows.length - 8);
+
+    const pages = [{ key: 'dashboard', label: 'Dashboard' }, { key: 'transactions', label: 'Transactions' }, { key: 'categories', label: 'Categories' }, { key: 'export', label: 'Export' }];
+    const navBase = { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 13px', border: 'none', borderRadius: '10px', background: 'transparent', color: '#7C7468', fontSize: '14.5px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', letterSpacing: '.1px' };
+    const navActive = { ...navBase, background: '#F6E7DF', color: '#B2532F' };
+    const navItems = pages.map(p => ({ label: p.label, style: S.page === p.key ? navActive : navBase, onClick: () => this.go(p.key) }));
+
+    const segBase = { flex: 1, padding: '10px', borderRadius: '9px', border: '1px solid #E2DACE', background: '#FBF8F2', color: '#8A8175', fontSize: '14px', fontWeight: 600, cursor: 'pointer' };
+    const expActive = { ...segBase, border: '1px solid #C2613E', background: '#F6E7DF', color: '#B2532F' };
+    const incActive = { ...segBase, border: '1px solid #3F8F6E', background: '#E2F0E9', color: '#2E6B52' };
+
+    const titles = { dashboard: 'Dashboard', transactions: 'Transactions', categories: 'Categories', export: 'Export data' };
+    const subs = { dashboard: 'Your money at a glance', transactions: 'Log, edit and filter your activity', categories: 'Organise where money goes', export: 'Download your records as CSV' };
+
+    return {
+      balanceLabel: this.fmt(balance), balanceColor: balance < 0 ? '#B2532F' : '#2B2723',
+      mIncomeLabel: this.fmt(mInc), mExpenseLabel: this.fmt(mExp), dmShort,
+      monthOptions, dashMonth: S.dashMonth, onDashMonth: (e) => this.setDashMonth(e),
+      pieSlices, pieEmpty: pdata.length === 0, pieTotalLabel: this.fmt0(ptotal), pieCaption: 'Spent · ' + dmShort,
+      barRects, barLabels, barGrid,
+      recentRows, onGoTx: () => this.go('transactions'),
+      filterMonth: S.filterMonth, onFilter: (e) => this.setFilter(e), filterOptions,
+      txRows, txCountLabel: txCount + (txCount === 1 ? ' transaction' : ' transactions'), noTx: txCount === 0,
+      catRows, catForm: S.catForm, catError: S.catError,
+      onCatName: (e) => this.setCat('name', e.target.value),
+      onCatTypeExp: () => this.setCat('type', 'expense'), onCatTypeInc: () => this.setCat('type', 'income'),
+      cTypeExpStyle: S.catForm.type === 'expense' ? expActive : segBase,
+      cTypeIncStyle: S.catForm.type === 'income' ? incActive : segBase,
+      onAddCat: () => this.addCategory(),
+      exportScope: S.exportScope, onScope: (e) => this.setScope(e), exportOptions,
+      scopeCount: sRows.length, sIncLabel: this.fmt(sInc), sExpLabel: this.fmt(sExp),
+      exportPreview, exportMore, hasMore: exportMore > 0, onExport: () => this.exportCsv(),
+      navItems,
+      pageTitle: titles[S.page], pageSub: subs[S.page],
+      isDashboard: S.page === 'dashboard', isTransactions: S.page === 'transactions', isCategories: S.page === 'categories', isExport: S.page === 'export',
+      onAdd: () => this.openAdd(),
+      showForm: S.showForm, modalTitle: S.editingId != null ? 'Edit transaction' : 'Add transaction', saveLabel: S.editingId != null ? 'Save changes' : 'Add transaction',
+      form: S.form, formError: S.formError, curSym: this.cur(),
+      onAmount: (e) => this.setForm('amount', e.target.value),
+      onCategory: (e) => this.setForm('category', e.target.value),
+      onDate: (e) => this.setForm('date', e.target.value),
+      onNote: (e) => this.setForm('note', e.target.value),
+      onTypeExp: () => this.setFormType('expense'), onTypeInc: () => this.setFormType('income'),
+      typeExpStyle: S.form.type === 'expense' ? expActive : segBase,
+      typeIncStyle: S.form.type === 'income' ? incActive : segBase,
+      formCatOptions,
+      onClose: () => this.closeForm(), onSubmit: () => this.submitForm(), onInner: (e) => e.stopPropagation()
+    };
+  }
+}
+</script>
+</body>
+</html>
